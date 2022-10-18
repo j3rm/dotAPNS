@@ -325,9 +325,17 @@ namespace dotAPNS
                 if (_lastJwtGenerationTime > DateTime.UtcNow - TimeSpan.FromMinutes(20)) // refresh no more than once every 20 minutes
                     return _jwt;
                 var now = DateTimeOffset.UtcNow;
+                var tokenTime= new DateTime(now.Year, now.Month, now.Day, now.Hour, 00, 00, 00, DateTimeKind.Utc); //default
+
+                // make the token the same across multiple servers
+                if (now.Minute>29)
+                {
+                    tokenTime=  new DateTime(now.Year, now.Month, now.Day, now.Hour, 30, 00, 00,DateTimeKind.Utc);
+
+                }
 
                 string header = JsonConvert.SerializeObject((new { alg = "ES256", kid = _keyId }));
-                string payload = JsonConvert.SerializeObject(new { iss = _teamId, iat = now.ToUnixTimeSeconds() });
+                string payload = JsonConvert.SerializeObject(new { iss = _teamId, iat = new DateTimeOffset(tokenTime).ToUnixTimeSeconds() });
 
                 string headerBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(header));
                 string payloadBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(payload));
